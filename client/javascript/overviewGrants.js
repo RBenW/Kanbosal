@@ -95,7 +95,7 @@ $(function () {
             url: 'http://localhost:8080/grants',
             type: 'PUT',
             data: JSON.stringify(myGrant),
-            contentType: 'application/json',
+            contentType: 'application/json'			
         });
 	});
 });
