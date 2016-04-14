@@ -44,18 +44,21 @@ CollectionDriver.prototype.get = function(collectionName, id, callback) {
 
 /* Returns the user document with the provided email. */
 CollectionDriver.prototype.getEmail = function(email, callback) {
-    db.collection("users", function(error, collection) {
+    db.collection("users").findOne({'email': email}, function(error, results) {
         if (error)
             callback(error);
-        else {
-            collection.findOne({'email': email}, function(error, results) {
-                if (error)
-                    callback(error);
-                else {
-                    callback(null, results);
-                }
-            });
-        }
+        else
+            callback(null, results);
+    });
+};
+
+/* Returns users by their department*/
+CollectionDriver.prototype.getUsersByDept = function(data, callback){
+    db.collection("users").find(data).toArray(function (error, users) {
+        if (error)
+            callback(error);
+        else
+            callback(null, users);
     });
 };
 
@@ -81,9 +84,7 @@ CollectionDriver.prototype.getGrants = function(userId, callback) {
 /* Returns a collection of cards matching the given grant ObjectID and userPermissionId. */
 CollectionDriver.prototype.getCards = function(grantId, userPermissionId, callback) {
     db.collection("grants").findOne({'_id': ObjectID(grantId)}, function(error, grant) {
-        if (error)
-            callback(error);
-        else {
+        if (grant) {
             var returnCards = {
                 progress: 0,
                 toDo: [],
@@ -124,6 +125,8 @@ CollectionDriver.prototype.getCards = function(grantId, userPermissionId, callba
                 }
             });
         }
+        else
+            callback(error);
     });
 }
 
@@ -165,14 +168,10 @@ CollectionDriver.prototype.save = function(collectionName, doc, callback) {
 };
 
 /* Updates the doc with the given docId in collectionName. */
-CollectionDriver.prototype.update = function(collectionName, docUpdates, docId, callback) {
-    var updateObject;
-
+CollectionDriver.prototype.update = function(collectionName, docUpdates, docId, userId, callback) {
     if (collectionName == "cards") {
-        updateObject = {
-            docUpdates,
-            $currentDate: {'timeLastEdit': true}    // updates timeLastEdit with current time
-        };
+        docUpdates.$addToSet = {userIds: userId};   // Adds the current user to the list of users in the card
+        docUpdates.$currentDate = {timeLastEdit: true}  // Updates the timeLastEdit to the current time
     }
 
     db.collection(collectionName, function(error, collection) {
@@ -181,7 +180,7 @@ CollectionDriver.prototype.update = function(collectionName, docUpdates, docId, 
         else {
             collection.updateOne(
                 {'_id': ObjectID(docId)},
-                updateObject,
+                docUpdates,
                 function(error, results) {
                     if (error)
                         callback(error);
@@ -189,6 +188,31 @@ CollectionDriver.prototype.update = function(collectionName, docUpdates, docId, 
                         callback(null, results);
                 }
             );
+        }
+    });
+};
+
+/* Moves cards through the columns of a single table of a grant */
+CollectionDriver.prototype.moveCard = function(grantId, card, userPermissionId, callback) {
+    var docUpdates = {
+        $pull: {},
+        $addToSet: {}
+    };
+    docUpdates.$pull['stages.' + userPermissionId + '.' + card.curCol] = card.id;
+    docUpdates.$addToSet['stages.' + userPermissionId + '.' + card.newCol] = card.id;
+    // callback(null, docUpdates);
+
+    db.collection('grants', function(error, collection) {
+        if (error)
+            callback(error);
+        else {
+            collection.update({'_id': ObjectID(grantId)}, docUpdates, function(error, results) {
+                if (error)
+                    callback(error);
+                else
+                    callback(null, results);
+            });
+            // callback(null, true);
         }
     });
 };
@@ -202,11 +226,36 @@ CollectionDriver.prototype.delete = function(collectionName, docId, callback) {
             collection.deleteOne({'_id': ObjectID(docId)}, function(error, doc) {
                 if (error)
                     callback(error);
-                else
-                    callback(null, doc);
+                //Remove the cardId from grants
+                else if (collectionName == "cards") {
+                    removeCardsFromGrant(docId, callback);
+                }
+                callback(null, doc);
             });
         }
     });
 };
+
+/* Removes the given cardId from all grants */
+var removeCardsFromGrant = function(cardId, callback) {
+    db.collection("grants", function(error, grants) {
+        if (error)
+            callback(error);
+        else {
+            grants.update({"stages.toDo": cardId}, {$pull: {"stages.$.toDo": cardId}}, {multi: true}, function(error, result) {
+                if (error)
+                    callback(error);
+            });
+            grants.update({"stages.inProgress": cardId}, {$pull: {"stages.$.inProgress": cardId}}, {multi: true}, function(error, result) {
+                if (error)
+                    callback(error);
+            });
+            grants.update({"stages.complete": cardId}, {$pull: {"stages.$.complete": cardId}}, {multi: true}, function(error, result) {
+                if (error)
+                    callback(error);
+            });
+        }
+    });
+}
 
 exports.CollectionDriver = CollectionDriver;

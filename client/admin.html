@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-signin-client_id" content="994369169298-85bcp2rukasedk61fu4rl6o4q4na71vq.apps.googleusercontent.com">
+  <title>Kanbosal</title>
+
+  <!-- css libraries -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  <!-- local stylesheets -->
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+  <link rel="stylesheet" type="text/css" href="/css/responsive-column.css">
+
+  <!-- js libraries -->
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+  <script src="/javascript/handlebars-v4.0.4.js"></script>
+  <script src="https://apis.google.com/js/platform.js?onload=onLoad" async defer></script>
+  <!-- <script src="/javascript/authentication.js"></script> -->
+
+</head>
+<body>
+
+  <div id="wrapper">
+    <nav class="navbar navbar-inverse navbar-fixed-top"></nav>
+    <div id="content">
+      <div id="sidebar" class="toggled"></div>
+      <div id="menu-toggle" class="glyphicon glyphicon-menu-right large"></div>
+      <div id="contentview" class="container-fluid toggled">
+        <div class="container-fluid">
+          <div id="pendingUsersRow" class="row" hidden>
+            <div class="col-xs-12">
+              <div id="pendingUsers" class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title overflow-ellipses">Pending User Confirmations</h4>
+                </div>
+                <div class="panel-body">
+                  <div class="row"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row-height">
+              <div class="col-xs-4 col-xs-height">
+                <div id="researchUsers" class="panel panel-default inside-full-height">
+                  <div class="panel-heading">
+                    <h4 class="panel-title overflow-ellipses">Research Department</h4>
+                  </div>
+                  <div class="panel-body">
+                    <div>Editing a user is currently non-functional, but will be implemented soon!</div>
+                    <div class="alertEmpty" role="alert" hidden>
+                      <div class="alert-notify alert alert-info">
+                        <h4 class="overflow-ellipses"><i class="fa fa-user-times"></i> No researchers.</h4>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="list-group"></div>
+                </div>
+              </div>
+              <div class="col-xs-4 col-xs-height">
+                <div id="internalUsers" class="panel panel-default inside-full-height">
+                  <div class="panel-heading">
+                    <h4 class="panel-title overflow-ellipses">Internal Review Department</h4>
+                  </div>
+                  <div class="panel-body" hidden>
+                    <div class="alertEmpty" role="alert">
+                      <div class="alert-notify alert alert-info">
+                        <h4 class="overflow-ellipses"><i class="fa fa-user-times"></i> No internal reviewers.</h4>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="list-group"></div>
+                </div>
+              </div>
+              <div class="col-xs-4 col-xs-height">
+                <div id="asuUsers" class="panel panel-default inside-full-height">
+                  <div class="panel-heading">
+                    <h4 class="panel-title overflow-ellipses">ASU Review Department</h4>
+                  </div>
+                  <div class="panel-body" hidden>
+                    <div class="alertEmpty" role="alert">
+                      <div class="alert-notify alert alert-info">
+                        <h4 class="overflow-ellipses"><i class="fa fa-user-times"></i> No asu reviewers.</h4>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="list-group"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <div id="inactiveUsers" class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title overflow-ellipses">Deactivated / Denied Users</h4>
+                </div>
+                <div class="panel-body">
+                  <div class="alertEmpty" role="alert" hidden>
+                    <div class="alert-notify alert alert-info">
+                      <h4 class="overflow-ellipses"><i class="fa fa-user-times"></i> No blacklisted users.</h4>
+                      <p>There are no deactivated or denied users. These are accounts that are not allowed access to Kanbosal.</p>
+                    </div>
+                  </div>
+                  <div class="row"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- begin : modals -->
+      <div id="denyUserModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-body">
+              Are you sure you want to deny this user from accessing Kanbosal?
+            </div>
+            <div class="modal-footer">
+              <div class="row" style="margin-right:-15px;">
+                <div class="col-xs-6"><button type="button" class="btn btn-block btn-primary" data-dismiss="modal" aria-label="Close">Cancel</button></div>
+                <div class="col-xs-6"><button type="button" class="btn btn-block btn-gold">Deny User</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="confirmUserModal" class="modal fade">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header"><h4>New User Confirmation</h4></div>
+            <form id="confirmUserForm">
+              <div class="modal-body form-horizontal">
+                <div class="form-group">
+                  <div class="col-xs-8 col-xs-offset-4">Select the options for this user!</div>
+                </div>
+                <div class="form-group">
+                  <label class="col-xs-4 control-label" for="stageInput">Department</label>
+                  <div class="col-xs-8">
+                    <select id="stageInput" class="form-control" name="permissions.stage" required>
+                      <option></option>
+                      <option value="0">Research</option>
+                      <option value="1">Internal Review</option>
+                      <option value="2">ASU Review</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-xs-4 control-label" for="levelInput">Permission Level</label>
+                  <div class="col-xs-8">
+                    <select id="levelInput" class="form-control" name="permissions.level" required>
+                      <option></option>
+                      <option value="0">Principle User</option>
+                      <option value="1">Regular User</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-xs-4 control-label">
+                    <small><a tabindex="0" class="fa fa-fw fa-question-circle" role="button" data-toggle="popover" data-trigger="focus" data-placement="bottom" title="Need some help selecting?" data-content="<small>To select multiple grants, hold down ctrl (win) or cmd (mac) and click on the grants, or simply hold down the left mouse button on one grant, and drag across the desired set.</small>"></a></small>&nbsp; Grant(s)
+                  </label>
+                  <div class="col-xs-8">
+                    <select multiple class="form-control" id="select-grants" name="grantIds" required></select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" aria-label="Close">Cancel</button>
+                <button type="submit" class="btn btn-gold">Confirm</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- end : modals -->
+
+    </div>
+    <footer></footer>
+  </div>
+
+  <!-- local scripts -->
+  <script src="/javascript/sidebar.js"></script>
+  <script src="/javascript/footer.js"></script>
+  <script src="/javascript/navbar.js"></script>
+  <script src="/javascript/administration.js"></script>
+
+</body>
+</html>

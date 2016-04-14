@@ -4,25 +4,42 @@ function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
   var Storage = window.localStorage;
 
-  $.getJSON('http://localhost:3000/users', {
+  $.getJSON('/login', {
     email: profile.getEmail()
   }, function(data) {
+    console.log('before: ' + data);
     // on success, check if user exists. yes: check if confirmed, then redirect; no: make new user
     if (data) {
       if (data.permissions.stage === -1) {
-        alert("Sorry, " + data.name + ", you have not yet been confirmed and assigned. Please contact your person of referral to receive confirmation.");
-        // signOut();  // uncomment after admin confirmation/assignment form is ready
+        gapi.auth2.getAuthInstance().signOut();          // temporarily commented until confirmation is available
+        $('#alertDeactivated').hide();
+        $('#alertRegistered').hide();
+        $('#alertProblem').hide();
+        $('#alertUnconfirmed').show('fast');
 
+        // window.location.href = "overview";                  // temporary for access even without confirmation
 
-        Storage.setItem('userData', JSON.stringify(data));  // temporary for access even without confirmation
-        window.location.href = "overview";                  // temporary for access even without confirmation
-      
-
-      } else {
-        // check if local storage is supported, else notify user to update or use a different browser.
-        // if (storageAvailable('localStorage')) 
-        Storage.setItem('userData', JSON.stringify(data));
-        window.location.href = "overview";
+      } else if (data.permissions.stage === -2) {
+        gapi.auth2.getAuthInstance().signOut();
+        $('#alertUnconfirmed').hide();
+        $('#alertRegistered').hide();
+        $('#alertProblem').hide();
+        $('#alertDeactivated').show('fast');
+      } else {  // update user image data in db, then go to overview
+        $.ajax({
+          url: '/users/' + data._id,
+          type: 'POST',
+          contentType: "application/json",
+          data: JSON.stringify({
+            $set: { 'imageUrl': profile.getImageUrl() }
+          }),
+          success: function () {
+            window.location.href = "overview";
+          },
+          error: function () {
+            alert('There was a problem processing your request. Please try again later.');
+          }
+        });
       }
     } else {
       var newUser = {
@@ -38,24 +55,35 @@ function onSignIn(googleUser) {
       };
 
       $.ajax({
-        url: 'http://localhost:3000/users',
+        url: 'users',
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(newUser),
         success: function(data) {
-          alert("Welcome. Your new account will be ready soon. Contact your person of referral if you have not yet been confirmed.");
-          signOut();
+          gapi.auth2.getAuthInstance().signOut();
+          $('#alertDeactivated').hide();
+          $('#alertUnconfirmed').hide();
+          $('#alertProblem').hide();
+          $('#alertRegistered').show('fast');
         }
       });
     }
+  }).error(function() {
+    gapi.auth2.getAuthInstance().signOut();
+    $('#alertDeactivated').hide();
+    $('#alertUnconfirmed').hide();
+    $('#alertRegistered').hide();
+    $('#alertProblem').show('fast');
   });
 }
 
 function signOut() {
   auth2 = gapi.auth2.getAuthInstance();
   auth2.signOut().then(function () {
-    console.log('User signed out.');
-    window.location.href = "/";
+    $.get('logout', function() {
+      console.log('User signed out.');
+      window.location.href = "/";
+    });
   });
 }
 

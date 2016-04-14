@@ -3,14 +3,14 @@
   <div class="grant-panel tab-left">
     <div>
       <div class="grant-info">
-        <a href="detail" title="{{title}}">{{title}}</a><br>
+        <a href="detail/{{_id}}" title="{{title}}">{{title}}</a><br>
         {{#if url}}
         <small><small><strong><a href="{{url}}" target="_blank">View Official Grant</a></strong></small></small>
         {{/if}}
       </div>
       <div class="grant-content">
         {{!-- since each grant will for sure have a stage, even if no cards, check not needed --}}
-        {{#each stage}}
+        {{#each stages}}
         <div class="col-xs-3">
           <div>
             {{#compare @index "<=" 2}}
