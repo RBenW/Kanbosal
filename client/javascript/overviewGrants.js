@@ -50,7 +50,7 @@ $(function () {
         var grantName = $("#grantName").val();
         var grantUrl = $("#grantUrl").val();
 		
-        var myGrant = {
+        var newGrant = {
             title : grantName,
             description : grantDescription,
             url : grantUrl,
@@ -85,8 +85,22 @@ $(function () {
         $.ajax({
             url: 'http://localhost:8080/grants',
             type: 'PUT',
-            data: JSON.stringify(myGrant),
-            contentType: 'application/json'			
-        });
+            data: JSON.stringify(newGrant),
+            contentType: 'application/json',	
+			success: function(newGrant) {
+			    // update user with grant id.
+			    var updateParams = {$addToSet: {grantIds: newGrant._id}};
+			
+			    $.ajax({
+			        url: '/updateUsers',//updateUser
+			        type: 'POST',
+			        data: JSON.stringify(updateParams),
+			        contentType: 'application/json',
+			        success: function(data) {
+			            window.location.reload(true);
+			        }
+			    });
+			}
+		});
 	});
 });
